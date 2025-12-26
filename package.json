@@ -1,0 +1,15 @@
+{
+  "name": "home-finacial",
+  "version": "0.1.0",
+  "description": "Home finance tracker for local network",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5"
+  }
+}
