@@ -1,6 +1,8 @@
 const express = require("express");
 const healthRoutes = require("./routes/health");
-const expenseRoutes = require("./routes/expenses");
+const accountsRoutes = require("./routes/accounts");
+const categoriesRoutes = require("./routes/categories");
+const transactionsRoutes = require("./routes/transactions");
 const { errorHandler } = require("./middlewares/errorHandler");
 
 const app = express();
@@ -8,7 +10,9 @@ const app = express();
 app.use(express.json({ limit: "256kb" }));
 
 app.use("/health", healthRoutes);
-app.use("/expenses", expenseRoutes);
+app.use("/api/accounts", accountsRoutes);
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/transactions", transactionsRoutes);
 
 app.use(errorHandler);
 

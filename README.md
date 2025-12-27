@@ -19,16 +19,23 @@ docker compose up --build
 
 API:
 - `GET /health`
-- `GET /expenses`
-- `POST /expenses`
+- `GET /api/accounts`
+- `POST /api/accounts`
+- `GET /api/categories`
+- `POST /api/categories`
+- `GET /api/transactions`
+- `POST /api/transactions`
 
-Example payload:
+Example transaction payload:
 
 ```json
 {
+  "account_id": 1,
+  "user_id": 1,
+  "category_id": 2,
   "amount_cents": 1200,
-  "category": "groceries",
-  "note": "weekend market",
+  "kind": "expense",
+  "description": "weekend market",
   "spent_at": "2024-01-15T12:00:00Z"
 }
 ```
