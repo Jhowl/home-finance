@@ -79,6 +79,7 @@ function initialForm() {
       currency: "USD",
       created_by_user_id: "",
       member_ids: [],
+      opening_balance_cents: "",
     },
     category: {
       name: "",
@@ -225,6 +226,11 @@ export default function App() {
           created_by_user_id: Number(form.account.created_by_user_id),
           member_ids: form.account.member_ids.map((value) => Number(value)),
         };
+        if (payload.opening_balance_cents !== "") {
+          payload.opening_balance_cents = Number(payload.opening_balance_cents);
+        } else {
+          delete payload.opening_balance_cents;
+        }
         await postJson("/api/accounts", payload);
       }
       if (section === "category") {
@@ -791,6 +797,15 @@ export default function App() {
                       type="text"
                       value={form.account.currency}
                       onChange={(e) => updateForm("account", "currency", e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Opening balance (cents)
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.account.opening_balance_cents}
+                      onChange={(e) => updateForm("account", "opening_balance_cents", e.target.value)}
                     />
                   </label>
                   <label>

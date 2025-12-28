@@ -39,6 +39,15 @@ async function create(data) {
       );
     }
 
+    if (data.opening_balance_cents && data.opening_balance_cents > 0) {
+      await client.query(
+        `INSERT INTO transactions
+          (account_id, user_id, category_id, amount_cents, kind, description, spent_at)
+         VALUES ($1, $2, NULL, $3, 'income', 'Opening balance', NOW())`,
+        [account.id, data.created_by_user_id, data.opening_balance_cents]
+      );
+    }
+
     await client.query("COMMIT");
     return account;
   } catch (err) {

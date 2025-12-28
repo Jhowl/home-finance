@@ -55,6 +55,17 @@ function validateAccount(input) {
   }
 
   const uniqueMembers = Array.from(new Set([createdByUserId, ...memberIds]));
+  const openingBalance = input.opening_balance_cents ?? input.initial_balance_cents ?? null;
+  let openingBalanceCents = null;
+  if (openingBalance !== null && openingBalance !== undefined && openingBalance !== "") {
+    const parsed = Number(openingBalance);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      const err = new Error("opening_balance_cents must be a non-negative integer");
+      err.status = 400;
+      throw err;
+    }
+    openingBalanceCents = parsed;
+  }
 
   return {
     name: input.name.trim(),
@@ -62,6 +73,7 @@ function validateAccount(input) {
     currency,
     created_by_user_id: createdByUserId,
     member_ids: uniqueMembers,
+    opening_balance_cents: openingBalanceCents,
   };
 }
 
