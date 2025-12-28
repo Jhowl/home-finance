@@ -36,9 +36,19 @@ async function monthlyTrend(req, res, next) {
   }
 }
 
+async function accountBalances(req, res, next) {
+  try {
+    const data = await reportsService.accountBalances();
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   summary,
   byCategory,
   byAccount,
   monthlyTrend,
+  accountBalances,
 };

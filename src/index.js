@@ -7,7 +7,7 @@ const categoriesRoutes = require("./routes/categories");
 const transactionsRoutes = require("./routes/transactions");
 const reportsRoutes = require("./routes/reports");
 const { errorHandler } = require("./middlewares/errorHandler");
-const { ensureAdminUser } = require("./services/seedService");
+const { ensureAdminUser, ensureDemoData } = require("./services/seedService");
 
 const app = express();
 
@@ -27,6 +27,7 @@ const port = Number(process.env.PORT || 3000);
 
 async function start() {
   await ensureAdminUser();
+  await ensureDemoData();
   app.listen(port, () => {
     console.log(`API listening on port ${port}`);
   });

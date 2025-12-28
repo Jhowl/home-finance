@@ -7,5 +7,6 @@ router.get("/summary", reportsController.summary);
 router.get("/by-category", reportsController.byCategory);
 router.get("/by-account", reportsController.byAccount);
 router.get("/monthly-trend", reportsController.monthlyTrend);
+router.get("/account-balances", reportsController.accountBalances);
 
 module.exports = router;

@@ -34,6 +34,7 @@ API:
 - `GET /api/reports/by-category`
 - `GET /api/reports/by-account`
 - `GET /api/reports/monthly-trend`
+- `GET /api/reports/account-balances`
 
 Example transaction payload:
 
@@ -52,12 +53,14 @@ Example transaction payload:
 Auth:
 - Login returns a bearer token. Send it as `Authorization: Bearer <token>` to `/api/auth/me` and `/api/auth/logout`.
 - Optional seed admin user: set `ADMIN_EMAIL` and `ADMIN_PASSWORD` env vars.
+- Optional demo seed data: set `SEED_DEMO=true` (default password `demo123`, override with `DEMO_PASSWORD`).
 
 Reports:
 - `GET /api/reports/summary?month=2025-02` -> `{ income_cents, expense_cents, net_cents }`
 - `GET /api/reports/by-category?month=2025-02` -> `{ labels: [...], values: [...] }`
 - `GET /api/reports/by-account?month=2025-02` -> `{ labels: [...], values: [...] }`
 - `GET /api/reports/monthly-trend?months=12` -> `{ labels: [...], income: [...], expense: [...] }`
+- `GET /api/reports/account-balances` -> `{ accounts: [{ account_id, account_name, balance_cents }] }`
 
 ## Local run (no Docker)
 

@@ -75,9 +75,21 @@ async function monthlyTrend(query) {
   };
 }
 
+async function accountBalances() {
+  const rows = await reportsRepository.accountBalances();
+  return {
+    accounts: rows.map((row) => ({
+      account_id: row.account_id,
+      account_name: row.account_name,
+      balance_cents: Number(row.balance_cents),
+    })),
+  };
+}
+
 module.exports = {
   summary,
   byCategory,
   byAccount,
   monthlyTrend,
+  accountBalances,
 };

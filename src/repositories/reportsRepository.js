@@ -57,9 +57,24 @@ async function monthlyTrend(start, end) {
   return rows;
 }
 
+async function accountBalances() {
+  const { rows } = await pool.query(
+    `SELECT
+      a.id AS account_id,
+      a.name AS account_name,
+      COALESCE(SUM(CASE WHEN t.kind = 'income' THEN t.amount_cents ELSE -t.amount_cents END), 0) AS balance_cents
+     FROM accounts a
+     LEFT JOIN transactions t ON t.account_id = a.id
+     GROUP BY a.id, a.name
+     ORDER BY a.name ASC`
+  );
+  return rows;
+}
+
 module.exports = {
   summary,
   byCategory,
   byAccount,
   monthlyTrend,
+  accountBalances,
 };
