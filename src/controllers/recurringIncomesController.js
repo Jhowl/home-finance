@@ -28,8 +28,28 @@ async function runRecurringIncomes(req, res, next) {
   }
 }
 
+async function updateRecurringIncome(req, res, next) {
+  try {
+    const income = await recurringIncomesService.updateRecurringIncome(Number(req.params.id), req.body);
+    res.json({ data: income });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteRecurringIncome(req, res, next) {
+  try {
+    await recurringIncomesService.deleteRecurringIncome(Number(req.params.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listRecurringIncomes,
   createRecurringIncome,
   runRecurringIncomes,
+  updateRecurringIncome,
+  deleteRecurringIncome,
 };

@@ -7,6 +7,14 @@ async function list() {
   return rows;
 }
 
+async function findById(id) {
+  const { rows } = await pool.query(
+    "SELECT id, name, type, currency, created_by_user_id, created_at FROM accounts WHERE id = $1",
+    [id]
+  );
+  return rows[0];
+}
+
 async function create(data) {
   const client = await pool.connect();
   try {
@@ -41,7 +49,26 @@ async function create(data) {
   }
 }
 
+async function update(id, data) {
+  const { rows } = await pool.query(
+    `UPDATE accounts
+     SET name = $1, type = $2, currency = $3
+     WHERE id = $4
+     RETURNING id, name, type, currency, created_by_user_id, created_at`,
+    [data.name, data.type, data.currency, id]
+  );
+  return rows[0];
+}
+
+async function remove(id) {
+  const { rows } = await pool.query("DELETE FROM accounts WHERE id = $1 RETURNING id", [id]);
+  return rows[0];
+}
+
 module.exports = {
   list,
+  findById,
   create,
+  update,
+  remove,
 };

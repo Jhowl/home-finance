@@ -18,7 +18,27 @@ async function createAccount(req, res, next) {
   }
 }
 
+async function updateAccount(req, res, next) {
+  try {
+    const account = await accountsService.updateAccount(Number(req.params.id), req.body);
+    res.json({ data: account });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteAccount(req, res, next) {
+  try {
+    await accountsService.deleteAccount(Number(req.params.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listAccounts,
   createAccount,
+  updateAccount,
+  deleteAccount,
 };

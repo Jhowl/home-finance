@@ -26,6 +26,7 @@ const recurringFormEl = document.getElementById("recurringForm");
 const tabButtons = document.querySelectorAll(".tab");
 const tabPanels = document.querySelectorAll(".tab-panel");
 const recurringListEl = document.getElementById("recurringList");
+const categoriesListEl = document.getElementById("categoriesList");
 const modalMessageEl = document.getElementById("modalMessage");
 const runRecurringButtonEl = document.getElementById("runRecurringButton");
 
@@ -90,6 +91,27 @@ async function postJson(url, payload) {
   return res.json();
 }
 
+async function patchJson(url, payload) {
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+async function deleteJson(url) {
+  const res = await fetch(url, { method: "DELETE" });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `Request failed: ${res.status}`);
+  }
+  return true;
+}
 function setStatus(connected) {
   if (!statusCardEl) {
     return;
@@ -195,6 +217,10 @@ function buildAccountCards(accounts, balances, transactions) {
             <span>${formatCurrency(totals.expense, account.currency)}</span>
           </div>
           <p class="account-activity">Last activity: ${formatDate(lastActivity)}</p>
+          <div class="detail-actions">
+            <button type="button" data-action="edit" data-id="${account.id}">Edit</button>
+            <button type="button" class="danger" data-action="delete" data-id="${account.id}">Delete</button>
+          </div>
         </article>
       `;
     })
@@ -205,6 +231,19 @@ function buildAccountCards(accounts, balances, transactions) {
       const id = card.getAttribute("data-account-id");
       if (id) {
         showAccountDetail(Number(id));
+      }
+    });
+  });
+
+  accountsGridEl.querySelectorAll("button[data-action]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const id = Number(button.getAttribute("data-id"));
+      const action = button.getAttribute("data-action");
+      if (action === "edit") {
+        editAccount(id);
+      } else if (action === "delete") {
+        deleteAccount(id);
       }
     });
   });
@@ -323,9 +362,63 @@ function buildRecurringList(items) {
           <span>Next: ${formatDate(item.next_run_at)}</span>
           <span>Last: ${item.last_run_at ? formatDate(item.last_run_at) : "—"}</span>
         </div>
+        <div class="detail-actions">
+          <button type="button" data-action="edit-recurring" data-id="${item.id}">Edit</button>
+          <button type="button" class="danger" data-action="delete-recurring" data-id="${item.id}">
+            Delete
+          </button>
+        </div>
       `
     )
     .join("");
+
+  recurringListEl.querySelectorAll("button[data-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = Number(button.getAttribute("data-id"));
+      const action = button.getAttribute("data-action");
+      if (action === "edit-recurring") {
+        editRecurring(id);
+      } else if (action === "delete-recurring") {
+        deleteRecurring(id);
+      }
+    });
+  });
+}
+
+function buildCategoriesList(items) {
+  if (!items.length) {
+    categoriesListEl.innerHTML = "<p class=\"empty\">No categories yet.</p>";
+    return;
+  }
+
+  categoriesListEl.innerHTML = items
+    .map(
+      (item) => `
+        <div class="detail-row">
+          <span>${item.name}</span>
+          <strong>${item.group_name || "—"}</strong>
+        </div>
+        <div class="detail-actions">
+          <button type="button" data-action="edit-category" data-id="${item.id}">Edit</button>
+          <button type="button" class="danger" data-action="delete-category" data-id="${item.id}">
+            Delete
+          </button>
+        </div>
+      `
+    )
+    .join("");
+
+  categoriesListEl.querySelectorAll("button[data-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = Number(button.getAttribute("data-id"));
+      const action = button.getAttribute("data-action");
+      if (action === "edit-category") {
+        editCategory(id);
+      } else if (action === "delete-category") {
+        deleteCategory(id);
+      }
+    });
+  });
 }
 
 function buildDetailMetrics({ balance, income, expense, lastActivity, currency }) {
@@ -558,6 +651,7 @@ async function loadData() {
     buildTrendChart(state.trend);
     buildTransactionsTable(state.transactions);
     buildRecurringList(state.recurringIncomes);
+    buildCategoriesList(state.categoryList);
     updateFormOptions();
     setStatus(true);
   } catch (err) {
@@ -642,6 +736,118 @@ function setModalMessage(message) {
   }
   modalMessageEl.textContent = message;
   modalMessageEl.hidden = false;
+}
+
+async function editAccount(accountId) {
+  const account = state.accounts.find((item) => item.id === accountId);
+  if (!account) {
+    return;
+  }
+
+  const name = window.prompt("Account name:", account.name);
+  if (!name) {
+    return;
+  }
+  const type = window.prompt(
+    "Account type (bank, credit_card, wallet, cash, investment, loan, other):",
+    account.type
+  );
+  if (!type) {
+    return;
+  }
+  const currency = window.prompt("Currency (e.g. USD):", account.currency || "USD");
+  if (!currency) {
+    return;
+  }
+
+  await patchJson(`/api/accounts/${accountId}`, {
+    name,
+    type,
+    currency,
+  });
+  await loadData();
+}
+
+async function deleteAccount(accountId) {
+  const account = state.accounts.find((item) => item.id === accountId);
+  if (!account) {
+    return;
+  }
+  const ok = window.confirm(`Delete account "${account.name}"? This cannot be undone.`);
+  if (!ok) {
+    return;
+  }
+  await deleteJson(`/api/accounts/${accountId}`);
+  await loadData();
+}
+
+async function editCategory(categoryId) {
+  const category = state.categoryList.find((item) => item.id === categoryId);
+  if (!category) {
+    return;
+  }
+  const name = window.prompt("Category name:", category.name);
+  if (!name) {
+    return;
+  }
+  const group = window.prompt("Group:", category.group_name || "");
+  const color = window.prompt("Color (hex or name):", category.color || "");
+
+  await patchJson(`/api/categories/${categoryId}`, {
+    name,
+    group_name: group === null ? category.group_name : group,
+    color: color === null ? category.color : color,
+  });
+  await loadData();
+}
+
+async function deleteCategory(categoryId) {
+  const category = state.categoryList.find((item) => item.id === categoryId);
+  if (!category) {
+    return;
+  }
+  const ok = window.confirm(`Delete category "${category.name}"?`);
+  if (!ok) {
+    return;
+  }
+  await deleteJson(`/api/categories/${categoryId}`);
+  await loadData();
+}
+
+async function editRecurring(recurringId) {
+  const item = state.recurringIncomes.find((row) => row.id === recurringId);
+  if (!item) {
+    return;
+  }
+  const amount = window.prompt("Amount (cents):", String(item.amount_cents));
+  if (amount === null || amount === "") {
+    return;
+  }
+  const cadence = window.prompt("Cadence (weekly, biweekly, monthly):", item.cadence);
+  if (!cadence) {
+    return;
+  }
+  const description = window.prompt("Description:", item.description || "");
+
+  await patchJson(`/api/recurring-incomes/${recurringId}`, {
+    amount_cents: Number(amount),
+    cadence,
+    description: description === null ? item.description : description,
+  });
+  await loadData();
+}
+
+async function deleteRecurring(recurringId) {
+  const item = state.recurringIncomes.find((row) => row.id === recurringId);
+  if (!item) {
+    return;
+  }
+  const ok = window.confirm("Delete this recurring income?");
+  if (!ok) {
+    return;
+  }
+  await deleteJson(`/api/recurring-incomes/${recurringId}`);
+  await loadData();
 }
 
 async function submitForm(form, endpoint) {

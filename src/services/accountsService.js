@@ -74,7 +74,78 @@ async function createAccount(payload) {
   return accountsRepository.create(data);
 }
 
+function validateAccountUpdate(input) {
+  if (!input || typeof input !== "object") {
+    const err = new Error("Invalid payload");
+    err.status = 400;
+    throw err;
+  }
+
+  const updates = {};
+  if (input.name !== undefined) {
+    if (!input.name || typeof input.name !== "string") {
+      const err = new Error("name must be a non-empty string");
+      err.status = 400;
+      throw err;
+    }
+    updates.name = input.name.trim();
+  }
+  if (input.type !== undefined) {
+    const type = String(input.type).trim();
+    if (!ACCOUNT_TYPES.has(type)) {
+      const err = new Error(`type must be one of: ${Array.from(ACCOUNT_TYPES).join(", ")}`);
+      err.status = 400;
+      throw err;
+    }
+    updates.type = type;
+  }
+  if (input.currency !== undefined) {
+    updates.currency = String(input.currency).trim().toUpperCase();
+  }
+
+  if (!Object.keys(updates).length) {
+    const err = new Error("At least one field is required");
+    err.status = 400;
+    throw err;
+  }
+
+  return updates;
+}
+
+async function updateAccount(id, payload) {
+  const updates = validateAccountUpdate(payload);
+  const existing = await accountsRepository.findById(id);
+  if (!existing) {
+    const err = new Error("Account not found");
+    err.status = 404;
+    throw err;
+  }
+  const updated = await accountsRepository.update(id, {
+    name: updates.name ?? existing.name,
+    type: updates.type ?? existing.type,
+    currency: updates.currency ?? existing.currency,
+  });
+  if (!updated) {
+    const err = new Error("Account not found");
+    err.status = 404;
+    throw err;
+  }
+  return updated;
+}
+
+async function deleteAccount(id) {
+  const removed = await accountsRepository.remove(id);
+  if (!removed) {
+    const err = new Error("Account not found");
+    err.status = 404;
+    throw err;
+  }
+  return removed;
+}
+
 module.exports = {
   listAccounts,
   createAccount,
+  updateAccount,
+  deleteAccount,
 };

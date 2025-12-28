@@ -363,6 +363,25 @@ h1 {
   color: var(--ink);
 }
 
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.detail-actions button.danger {
+  border-color: rgba(201, 42, 42, 0.4);
+  color: #c92a2a;
+}
+
 .bar-chart {
   display: grid;
   gap: 10px;

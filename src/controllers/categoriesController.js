@@ -18,7 +18,27 @@ async function createCategory(req, res, next) {
   }
 }
 
+async function updateCategory(req, res, next) {
+  try {
+    const category = await categoriesService.updateCategory(Number(req.params.id), req.body);
+    res.json({ data: category });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteCategory(req, res, next) {
+  try {
+    await categoriesService.deleteCategory(Number(req.params.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listCategories,
   createCategory,
+  updateCategory,
+  deleteCategory,
 };

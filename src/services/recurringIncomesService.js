@@ -86,6 +86,79 @@ async function createRecurringIncome(payload) {
   return recurringIncomesRepository.create(data);
 }
 
+function validateRecurringUpdate(input) {
+  if (!input || typeof input !== "object") {
+    const err = new Error("Invalid payload");
+    err.status = 400;
+    throw err;
+  }
+
+  const updates = {};
+  if (input.amount_cents !== undefined) {
+    const amount = Number(input.amount_cents);
+    if (!Number.isInteger(amount) || amount < 0) {
+      const err = new Error("amount_cents must be a non-negative integer");
+      err.status = 400;
+      throw err;
+    }
+    updates.amount_cents = amount;
+  }
+  if (input.cadence !== undefined) {
+    const cadence = String(input.cadence).trim();
+    if (!CADENCES.has(cadence)) {
+      const err = new Error("cadence must be weekly, biweekly, or monthly");
+      err.status = 400;
+      throw err;
+    }
+    updates.cadence = cadence;
+  }
+  if (input.description !== undefined) {
+    updates.description = input.description ? String(input.description).trim() : null;
+  }
+
+  if (!Object.keys(updates).length) {
+    const err = new Error("At least one field is required");
+    err.status = 400;
+    throw err;
+  }
+
+  return updates;
+}
+
+async function updateRecurringIncome(id, payload) {
+  const updates = validateRecurringUpdate(payload);
+  const current = await recurringIncomesRepository.findById(id);
+  if (!current) {
+    const err = new Error("Recurring income not found");
+    err.status = 404;
+    throw err;
+  }
+
+  const cadence = updates.cadence ?? current.cadence;
+  const amount = updates.amount_cents ?? current.amount_cents;
+  const description = updates.description ?? current.description;
+  const nextRunAt = updates.cadence
+    ? computeNextRunFrom(new Date(), cadence)
+    : new Date(current.next_run_at);
+
+  return recurringIncomesRepository.update(id, {
+    amount_cents: amount,
+    cadence,
+    description,
+    next_run_at: nextRunAt,
+  });
+}
+
+async function deleteRecurringIncome(id) {
+  const removed = await recurringIncomesRepository.remove(id);
+  if (!removed) {
+    const err = new Error("Recurring income not found");
+    err.status = 404;
+    throw err;
+  }
+  return removed;
+}
+
 async function runDueRecurringIncomes(pool, asOfDate = new Date()) {
   const dayStart = new Date(
     Date.UTC(asOfDate.getUTCFullYear(), asOfDate.getUTCMonth(), asOfDate.getUTCDate())
@@ -141,5 +214,7 @@ async function runDueRecurringIncomes(pool, asOfDate = new Date()) {
 module.exports = {
   listRecurringIncomes,
   createRecurringIncome,
+  updateRecurringIncome,
+  deleteRecurringIncome,
   runDueRecurringIncomes,
 };
