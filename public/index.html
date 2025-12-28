@@ -38,6 +38,10 @@
           <label for="refreshButton">Refresh</label>
           <button id="refreshButton">Update view</button>
         </div>
+        <div class="control">
+          <label for="quickAddHeader">Add</label>
+          <button id="quickAddHeader">Add data</button>
+        </div>
       </section>
 
       <section class="summary" id="summaryCards"></section>
@@ -88,6 +92,17 @@
           <div id="trendChart" class="trend-chart"></div>
         </div>
 
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Recurring income</h2>
+            <p>Upcoming predictable inflows.</p>
+          </div>
+          <div class="panel-actions">
+            <button id="runRecurringButton">Run now</button>
+          </div>
+          <div id="recurringList" class="detail-list"></div>
+        </div>
+
         <div class="panel wide">
           <div class="panel-header">
             <h2>Recent transactions</h2>
@@ -98,6 +113,145 @@
       </section>
     </div>
 
+    <div class="modal" id="quickAddModal" hidden>
+      <div class="modal-backdrop"></div>
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="detail-eyebrow">Quick add</p>
+            <h3>Add new data</h3>
+          </div>
+          <button id="modalClose" class="detail-close" type="button">Close</button>
+        </div>
+        <div class="modal-tabs">
+          <button class="tab active" data-tab="transaction">Expense / Income</button>
+          <button class="tab" data-tab="account">Account</button>
+          <button class="tab" data-tab="category">Category</button>
+          <button class="tab" data-tab="user">User</button>
+          <button class="tab" data-tab="recurring">Recurring income</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-message" id="modalMessage" hidden></div>
+          <form id="transactionForm" class="tab-panel active" data-tab-panel="transaction">
+            <label>Account
+              <select name="account_id" required></select>
+            </label>
+            <label>User
+              <select name="user_id" required></select>
+            </label>
+            <label>Category
+              <select name="category_id"></select>
+            </label>
+            <label>Type
+              <select name="kind" required>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </label>
+            <label>Amount (cents)
+              <input name="amount_cents" type="number" min="0" required />
+            </label>
+            <label>Description
+              <input name="description" type="text" />
+            </label>
+            <label>Date
+              <input name="spent_at" type="date" />
+            </label>
+            <button type="submit">Add transaction</button>
+          </form>
+
+          <form id="accountForm" class="tab-panel" data-tab-panel="account">
+            <label>Name
+              <input name="name" type="text" required />
+            </label>
+            <label>Type
+              <select name="type" required>
+                <option value="bank">Bank</option>
+                <option value="credit_card">Credit card</option>
+                <option value="wallet">Wallet</option>
+                <option value="cash">Cash</option>
+                <option value="investment">Investment</option>
+                <option value="loan">Loan</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Currency
+              <input name="currency" type="text" value="USD" />
+            </label>
+            <label>Owner
+              <select name="created_by_user_id" required></select>
+            </label>
+            <label>Members
+              <select name="member_ids" multiple></select>
+            </label>
+            <button type="submit">Add account</button>
+          </form>
+
+          <form id="categoryForm" class="tab-panel" data-tab-panel="category">
+            <label>Name
+              <input name="name" type="text" required />
+            </label>
+            <label>Group
+              <input name="group_name" type="text" />
+            </label>
+            <label>Color
+              <input name="color" type="text" placeholder="#6aa84f" />
+            </label>
+            <button type="submit">Add category</button>
+          </form>
+
+          <form id="userForm" class="tab-panel" data-tab-panel="user">
+            <label>Name
+              <input name="name" type="text" required />
+            </label>
+            <label>Email
+              <input name="email" type="email" required />
+            </label>
+            <label>Password
+              <input name="password" type="password" required />
+            </label>
+            <label>Role
+              <select name="role">
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <button type="submit">Add user</button>
+          </form>
+
+          <form id="recurringForm" class="tab-panel" data-tab-panel="recurring">
+            <label>Account
+              <select name="account_id" required></select>
+            </label>
+            <label>User
+              <select name="user_id" required></select>
+            </label>
+            <label>Category
+              <select name="category_id"></select>
+            </label>
+            <label>Cadence
+              <select name="cadence" required>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Biweekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </label>
+            <label>Amount (cents)
+              <input name="amount_cents" type="number" min="0" required />
+            </label>
+            <label>Description
+              <input name="description" type="text" />
+            </label>
+            <label>Start date
+              <input name="start_date" type="date" required />
+            </label>
+            <button type="submit">Add recurring income</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <button class="fab" id="quickAddButton">+</button>
     <script src="./app.js"></script>
   </body>
 </html>

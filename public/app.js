@@ -14,6 +14,20 @@ const accountDetailMetricsEl = document.getElementById("accountDetailMetrics");
 const accountDetailCategoriesEl = document.getElementById("accountDetailCategories");
 const accountDetailTransactionsEl = document.getElementById("accountDetailTransactions");
 const accountDetailCloseEl = document.getElementById("accountDetailClose");
+const quickAddButtonEl = document.getElementById("quickAddButton");
+const quickAddHeaderEl = document.getElementById("quickAddHeader");
+const quickAddModalEl = document.getElementById("quickAddModal");
+const modalCloseEl = document.getElementById("modalClose");
+const transactionFormEl = document.getElementById("transactionForm");
+const accountFormEl = document.getElementById("accountForm");
+const categoryFormEl = document.getElementById("categoryForm");
+const userFormEl = document.getElementById("userForm");
+const recurringFormEl = document.getElementById("recurringForm");
+const tabButtons = document.querySelectorAll(".tab");
+const tabPanels = document.querySelectorAll(".tab-panel");
+const recurringListEl = document.getElementById("recurringList");
+const modalMessageEl = document.getElementById("modalMessage");
+const runRecurringButtonEl = document.getElementById("runRecurringButton");
 
 const state = {
   month: "",
@@ -24,6 +38,9 @@ const state = {
   summary: null,
   categories: null,
   trend: null,
+  users: [],
+  categoryList: [],
+  recurringIncomes: [],
 };
 
 function formatMonth(date) {
@@ -56,6 +73,19 @@ async function fetchJson(url) {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+async function postJson(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `Request failed: ${res.status}`);
   }
   return res.json();
 }
@@ -249,6 +279,7 @@ function buildTransactionsTable(transactions) {
           <th>Description</th>
           <th>Account</th>
           <th>Category</th>
+          <th>User</th>
           <th>Type</th>
           <th>Amount</th>
         </tr>
@@ -262,6 +293,7 @@ function buildTransactionsTable(transactions) {
               <td>${tx.description || "-"}</td>
               <td>${tx.account_name || tx.account_id}</td>
               <td>${tx.category_name || "Uncategorized"}</td>
+              <td>${tx.user_name || tx.user_id}</td>
               <td><span class="badge">${tx.kind}</span></td>
               <td>${formatCurrency(tx.amount_cents)}</td>
             </tr>
@@ -271,6 +303,29 @@ function buildTransactionsTable(transactions) {
       </tbody>
     </table>
   `;
+}
+
+function buildRecurringList(items) {
+  if (!items.length) {
+    recurringListEl.innerHTML = "<p class=\"empty\">No recurring income yet.</p>";
+    return;
+  }
+
+  recurringListEl.innerHTML = items
+    .slice(0, 6)
+    .map(
+      (item) => `
+        <div class="detail-row">
+          <span>${item.description || item.account_name} · ${item.cadence}</span>
+          <strong>${formatCurrency(item.amount_cents)}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Next: ${formatDate(item.next_run_at)}</span>
+          <span>Last: ${item.last_run_at ? formatDate(item.last_run_at) : "—"}</span>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function buildDetailMetrics({ balance, income, expense, lastActivity, currency }) {
@@ -417,32 +472,84 @@ function updateAccountFilter(accounts) {
   accountFilterEl.value = state.accountId;
 }
 
+function updateFormOptions() {
+  const accountOptions = state.accounts.length
+    ? state.accounts.map((account) => `<option value="${account.id}">${account.name}</option>`).join("")
+    : '<option value="">No accounts</option>';
+  const categoryListOptions = [
+    '<option value="">Uncategorized</option>',
+    ...state.categoryList.map(
+      (category) => `<option value="${category.id}">${category.name}</option>`
+    ),
+  ];
+  const userOptions = state.users.length
+    ? state.users.map((user) => `<option value="${user.id}">${user.name}</option>`).join("")
+    : '<option value="">No users</option>';
+
+  [transactionFormEl, recurringFormEl].forEach((form) => {
+    form.querySelector('select[name="account_id"]').innerHTML = accountOptions;
+    form.querySelector('select[name="category_id"]').innerHTML = categoryListOptions.join("");
+    form.querySelector('select[name="user_id"]').innerHTML = userOptions;
+  });
+
+  accountFormEl.querySelector('select[name="created_by_user_id"]').innerHTML = userOptions;
+  accountFormEl.querySelector('select[name="member_ids"]').innerHTML = userOptions;
+
+  const hasUsers = state.users.length > 0;
+  const hasAccounts = state.accounts.length > 0;
+  const transactionButton = transactionFormEl.querySelector("button[type='submit']");
+  const recurringButton = recurringFormEl.querySelector("button[type='submit']");
+  const accountButton = accountFormEl.querySelector("button[type='submit']");
+
+  transactionFormEl.querySelector('select[name="account_id"]').disabled = !hasAccounts;
+  transactionFormEl.querySelector('select[name="user_id"]').disabled = !hasUsers;
+  recurringFormEl.querySelector('select[name="account_id"]').disabled = !hasAccounts;
+  recurringFormEl.querySelector('select[name="user_id"]').disabled = !hasUsers;
+  accountFormEl.querySelector('select[name="created_by_user_id"]').disabled = !hasUsers;
+
+  transactionButton.disabled = !(hasAccounts && hasUsers);
+  recurringButton.disabled = !(hasAccounts && hasUsers);
+  accountButton.disabled = !hasUsers;
+  userFormEl.querySelector("button[type='submit']").disabled = false;
+}
+
 async function loadData() {
   const month = state.month;
   const accountFilter = state.accountId !== "all" ? `&account_id=${state.accountId}` : "";
 
   try {
-    const [accountsRes, balancesRes, summaryRes, categoryRes, trendRes, transactionsRes] =
-      await Promise.all([
-        fetchJson("/api/accounts"),
-        fetchJson("/api/reports/account-balances"),
-        fetchJson(`/api/reports/summary?month=${month}`),
-        fetchJson(`/api/reports/by-category?month=${month}`),
-        fetchJson("/api/reports/monthly-trend?months=6"),
-        fetchJson(`/api/transactions?month=${month}${accountFilter}`),
-      ]);
+    const [
+      accountsRes,
+      balancesRes,
+      summaryRes,
+      categoryRes,
+      trendRes,
+      transactionsRes,
+      categoriesRes,
+      usersRes,
+      recurringRes,
+    ] = await Promise.all([
+      fetchJson("/api/accounts"),
+      fetchJson("/api/reports/account-balances"),
+      fetchJson(`/api/reports/summary?month=${month}`),
+      fetchJson(`/api/reports/by-category?month=${month}`),
+      fetchJson("/api/reports/monthly-trend?months=6"),
+      fetchJson(`/api/transactions?month=${month}${accountFilter}`),
+      fetchJson("/api/categories"),
+      fetchJson("/api/users"),
+      fetchJson("/api/recurring-incomes"),
+    ]);
 
     state.accounts = accountsRes.data || [];
     state.balances = balancesRes.data?.accounts || [];
     state.summary = summaryRes.data || null;
     state.categories = categoryRes.data || null;
     state.trend = trendRes.data || null;
+    state.categoryList = categoriesRes.data || [];
+    state.users = usersRes.data || [];
+    state.recurringIncomes = recurringRes.data || [];
 
-    const transactions = (transactionsRes.data || []).map((tx) => ({
-      ...tx,
-      account_name: state.accounts.find((a) => a.id === tx.account_id)?.name,
-    }));
-    state.transactions = transactions;
+    state.transactions = transactionsRes.data || [];
 
     updateAccountFilter(state.accounts);
     buildSummaryCards(state.summary);
@@ -450,11 +557,103 @@ async function loadData() {
     buildCategoryChart(state.categories);
     buildTrendChart(state.trend);
     buildTransactionsTable(state.transactions);
+    buildRecurringList(state.recurringIncomes);
+    updateFormOptions();
     setStatus(true);
   } catch (err) {
     console.error(err);
     setStatus(false);
     summaryCardsEl.innerHTML = "<p class=\"empty\">Unable to load data.</p>";
+  }
+}
+
+function openModal() {
+  quickAddModalEl.hidden = false;
+}
+
+function closeModal() {
+  quickAddModalEl.hidden = true;
+  setModalMessage("");
+}
+
+function switchTab(target) {
+  tabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.tab === target);
+  });
+  tabPanels.forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.tabPanel === target);
+  });
+  setModalMessage("");
+}
+
+function serializeForm(form) {
+  const data = new FormData(form);
+  const payload = {};
+  data.forEach((value, key) => {
+    if (payload[key]) {
+      if (Array.isArray(payload[key])) {
+        payload[key].push(value);
+      } else {
+        payload[key] = [payload[key], value];
+      }
+    } else {
+      payload[key] = value;
+    }
+  });
+  return payload;
+}
+
+function normalizePayload(formId, payload) {
+  if (formId === "transactionForm") {
+    payload.amount_cents = Number(payload.amount_cents);
+    payload.account_id = Number(payload.account_id);
+    payload.user_id = Number(payload.user_id);
+    if (payload.spent_at) {
+      payload.spent_at = new Date(payload.spent_at).toISOString();
+    }
+    if (!payload.category_id) {
+      delete payload.category_id;
+    }
+  }
+  if (formId === "accountForm") {
+    payload.created_by_user_id = Number(payload.created_by_user_id);
+    payload.member_ids = payload.member_ids ? [].concat(payload.member_ids) : [];
+    payload.member_ids = payload.member_ids.map((id) => Number(id));
+  }
+  if (formId === "recurringForm") {
+    payload.amount_cents = Number(payload.amount_cents);
+    payload.account_id = Number(payload.account_id);
+    payload.user_id = Number(payload.user_id);
+    if (!payload.category_id) {
+      delete payload.category_id;
+    }
+  }
+  return payload;
+}
+
+function setModalMessage(message) {
+  if (!modalMessageEl) {
+    return;
+  }
+  if (!message) {
+    modalMessageEl.hidden = true;
+    modalMessageEl.textContent = "";
+    return;
+  }
+  modalMessageEl.textContent = message;
+  modalMessageEl.hidden = false;
+}
+
+async function submitForm(form, endpoint) {
+  try {
+    const payload = normalizePayload(form.id, serializeForm(form));
+    await postJson(endpoint, payload);
+    form.reset();
+    setModalMessage("");
+    await loadData();
+  } catch (err) {
+    setModalMessage(err.message || "Unable to save. Check your input.");
+    throw err;
   }
 }
 
@@ -477,6 +676,52 @@ function init() {
   accountDetailCloseEl.addEventListener("click", () => {
     accountDetailEl.hidden = true;
   });
+  quickAddButtonEl.addEventListener("click", openModal);
+  if (quickAddHeaderEl) {
+    quickAddHeaderEl.addEventListener("click", openModal);
+  }
+  modalCloseEl.addEventListener("click", closeModal);
+  quickAddModalEl.querySelector(".modal-backdrop").addEventListener("click", closeModal);
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => switchTab(button.dataset.tab));
+  });
+
+  transactionFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitForm(transactionFormEl, "/api/transactions");
+  });
+
+  accountFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitForm(accountFormEl, "/api/accounts");
+  });
+
+  categoryFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitForm(categoryFormEl, "/api/categories");
+  });
+
+  userFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitForm(userFormEl, "/api/users");
+  });
+
+  recurringFormEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitForm(recurringFormEl, "/api/recurring-incomes");
+  });
+
+  if (runRecurringButtonEl) {
+    runRecurringButtonEl.addEventListener("click", async () => {
+      try {
+        await postJson("/api/recurring-incomes/run", {});
+        await loadData();
+      } catch (err) {
+        setModalMessage(err.message || "Unable to run recurring income.");
+      }
+    });
+  }
 
   loadData();
 }

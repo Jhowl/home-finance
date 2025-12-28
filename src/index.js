@@ -7,6 +7,9 @@ const accountsRoutes = require("./routes/accounts");
 const categoriesRoutes = require("./routes/categories");
 const transactionsRoutes = require("./routes/transactions");
 const reportsRoutes = require("./routes/reports");
+const recurringIncomesRoutes = require("./routes/recurringIncomes");
+const { pool } = require("./config/db");
+const { runDueRecurringIncomes } = require("./services/recurringIncomesService");
 const { errorHandler } = require("./middlewares/errorHandler");
 const { ensureAdminUser, ensureDemoData } = require("./services/seedService");
 
@@ -22,6 +25,7 @@ app.use("/api/accounts", accountsRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/transactions", transactionsRoutes);
 app.use("/api/reports", reportsRoutes);
+app.use("/api/recurring-incomes", recurringIncomesRoutes);
 
 app.use(errorHandler);
 
@@ -33,6 +37,17 @@ async function start() {
   app.listen(port, () => {
     console.log(`API listening on port ${port}`);
   });
+
+  const enabled = String(process.env.ENABLE_RECURRING_RUNNER || "true").toLowerCase() === "true";
+  if (enabled) {
+    const minutes = Number(process.env.RECURRING_RUNNER_INTERVAL_MINUTES || 60);
+    const interval = Math.max(5, minutes) * 60 * 1000;
+    setInterval(() => {
+      runDueRecurringIncomes(pool).catch((err) => {
+        console.error("Recurring income runner failed:", err.message);
+      });
+    }, interval);
+  }
 }
 
 start();

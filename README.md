@@ -17,7 +17,7 @@ Minimal Node.js + Postgres API for home finance tracking, designed for Docker on
 docker compose up --build
 ```
 
-API:
+API + UI:
 - `GET /health`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
@@ -30,11 +30,24 @@ API:
 - `POST /api/categories`
 - `GET /api/transactions`
 - `POST /api/transactions`
+- `GET /api/recurring-incomes`
+- `POST /api/recurring-incomes`
+- `POST /api/recurring-incomes/run`
 - `GET /api/reports/summary`
 - `GET /api/reports/by-category`
 - `GET /api/reports/by-account`
 - `GET /api/reports/monthly-trend`
 - `GET /api/reports/account-balances`
+
+UI:
+- `GET /` (dashboard)
+
+Demo:
+- `docs/demo.md`
+- `scripts/demo.sh`
+
+Migrations:
+- `docs/migrations/2025-02-18-add-recurring-last-run.sql`
 
 Example transaction payload:
 
@@ -54,6 +67,9 @@ Auth:
 - Login returns a bearer token. Send it as `Authorization: Bearer <token>` to `/api/auth/me` and `/api/auth/logout`.
 - Optional seed admin user: set `ADMIN_EMAIL` and `ADMIN_PASSWORD` env vars.
 - Optional demo seed data: set `SEED_DEMO=true` (default password `demo123`, override with `DEMO_PASSWORD`).
+Recurring incomes:
+- Auto-runner is enabled by default; change with `ENABLE_RECURRING_RUNNER=false`.
+- Interval (minutes): `RECURRING_RUNNER_INTERVAL_MINUTES` (default 60, minimum 5).
 
 Reports:
 - `GET /api/reports/summary?month=2025-02` -> `{ income_cents, expense_cents, net_cents }`

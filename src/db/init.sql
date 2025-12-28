@@ -56,3 +56,19 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
+
+CREATE TABLE IF NOT EXISTS recurring_incomes (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  category_id INTEGER REFERENCES categories(id),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  cadence VARCHAR(16) NOT NULL CHECK (cadence IN ('weekly', 'biweekly', 'monthly')),
+  start_date DATE NOT NULL,
+  next_run_at DATE NOT NULL,
+  last_run_at TIMESTAMP,
+  description TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recurring_incomes_next_run_at ON recurring_incomes (next_run_at);

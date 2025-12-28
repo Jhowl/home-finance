@@ -44,8 +44,12 @@ async function list(filters) {
       t.description,
       t.spent_at,
       t.created_at,
-      c.name AS category_name
+      c.name AS category_name,
+      a.name AS account_name,
+      u.name AS user_name
     FROM transactions t
+    JOIN accounts a ON a.id = t.account_id
+    JOIN users u ON u.id = t.user_id
     LEFT JOIN categories c ON c.id = t.category_id
     ${whereClause}
     ORDER BY t.spent_at DESC

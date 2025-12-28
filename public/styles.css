@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: var(--font);
@@ -210,6 +214,20 @@ h1 {
   margin: 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.panel-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
 .accounts {
@@ -433,6 +451,121 @@ h1 {
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(29, 27, 22, 0.45);
+}
+
+.modal-card {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: min(620px, 90vw);
+  box-shadow: var(--shadow);
+  z-index: 1;
+  display: grid;
+  gap: 16px;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+
+.modal-body {
+  display: grid;
+  gap: 12px;
+}
+
+.modal-message {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff4e6;
+  color: #c92a2a;
+  border: 1px solid rgba(201, 42, 42, 0.25);
+  font-size: 0.85rem;
+}
+
+.tab-panel {
+  display: none;
+  gap: 12px;
+}
+
+.tab-panel.active {
+  display: grid;
+}
+
+.tab-panel label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tab-panel input,
+.tab-panel select,
+.tab-panel button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 0.95rem;
+}
+
+.tab-panel button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: var(--highlight);
+  color: var(--ink);
+  font-size: 2rem;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  z-index: 5;
 }
 
 .badge {
