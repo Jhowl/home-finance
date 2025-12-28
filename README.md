@@ -19,12 +19,21 @@ docker compose up --build
 
 API:
 - `GET /health`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/users`
+- `POST /api/users`
 - `GET /api/accounts`
 - `POST /api/accounts`
 - `GET /api/categories`
 - `POST /api/categories`
 - `GET /api/transactions`
 - `POST /api/transactions`
+- `GET /api/reports/summary`
+- `GET /api/reports/by-category`
+- `GET /api/reports/by-account`
+- `GET /api/reports/monthly-trend`
 
 Example transaction payload:
 
@@ -39,6 +48,16 @@ Example transaction payload:
   "spent_at": "2024-01-15T12:00:00Z"
 }
 ```
+
+Auth:
+- Login returns a bearer token. Send it as `Authorization: Bearer <token>` to `/api/auth/me` and `/api/auth/logout`.
+- Optional seed admin user: set `ADMIN_EMAIL` and `ADMIN_PASSWORD` env vars.
+
+Reports:
+- `GET /api/reports/summary?month=2025-02` -> `{ income_cents, expense_cents, net_cents }`
+- `GET /api/reports/by-category?month=2025-02` -> `{ labels: [...], values: [...] }`
+- `GET /api/reports/by-account?month=2025-02` -> `{ labels: [...], values: [...] }`
+- `GET /api/reports/monthly-trend?months=12` -> `{ labels: [...], income: [...], expense: [...] }`
 
 ## Local run (no Docker)
 
