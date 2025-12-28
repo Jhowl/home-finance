@@ -123,6 +123,7 @@ export default function App() {
   const [modalError, setModalError] = useState("");
   const [editTarget, setEditTarget] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const filtersLabel = useMemo(() => {
     const selected = data.accounts.find((item) => String(item.id) === accountFilter);
@@ -132,6 +133,7 @@ export default function App() {
   async function loadData() {
     setLoading(true);
     try {
+      setApiError("");
       const accountParam = accountFilter === "all" ? "" : `&account_id=${accountFilter}`;
       const [
         accountsRes,
@@ -166,6 +168,8 @@ export default function App() {
         users: usersRes.data || [],
         recurring: recurringRes.data || [],
       });
+    } catch (err) {
+      setApiError(err.message || "Unable to reach the API.");
     } finally {
       setLoading(false);
     }
@@ -352,6 +356,7 @@ export default function App() {
             <h1>Household Ledger</h1>
             <p>Balances, insights, and recurring cash flow in one view.</p>
           </div>
+          {apiError && <div className="error">{apiError}</div>}
           <div className="filters">
             <label>
               Month
@@ -401,7 +406,13 @@ export default function App() {
                 <p>Expense distribution for {month}</p>
               </div>
             </div>
-            {categoryChartData ? <Doughnut data={categoryChartData} /> : <p>No data.</p>}
+            {categoryChartData ? (
+              <div className="chart-frame">
+                <Doughnut data={categoryChartData} />
+              </div>
+            ) : (
+              <p>No data.</p>
+            )}
           </div>
 
           <div className="card chart-card">
@@ -412,7 +423,21 @@ export default function App() {
               </div>
             </div>
             {trendData ? (
-              <Line data={trendData} options={{ responsive: true, maintainAspectRatio: false }} />
+              <div className="chart-frame">
+                <Line
+                  data={trendData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    normalized: true,
+                    resizeDelay: 0,
+                    plugins: {
+                      legend: { display: true, position: "top" },
+                    },
+                  }}
+                />
+              </div>
             ) : (
               <p>No data.</p>
             )}
@@ -481,8 +506,12 @@ export default function App() {
                 <button
                   type="button"
                   onClick={async () => {
-                    await postJson("/api/recurring-incomes/run", {});
-                    await loadData();
+                    try {
+                      await postJson("/api/recurring-incomes/run", {});
+                      await loadData();
+                    } catch (err) {
+                      setApiError(err.message || "Unable to run recurring income.");
+                    }
                   }}
                 >
                   Run now

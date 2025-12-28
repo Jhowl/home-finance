@@ -164,6 +164,12 @@ aside {
   grid-column: span 6;
 }
 
+.chart-frame {
+  height: 260px;
+  max-height: 260px;
+  min-height: 260px;
+}
+
 .section-title {
   display: flex;
   justify-content: space-between;
