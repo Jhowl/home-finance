@@ -34,10 +34,21 @@ async function list(filters) {
   const { conditions, values } = buildFilters(filters);
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const query = `
-    SELECT id, account_id, user_id, category_id, amount_cents, kind, description, spent_at, created_at
-    FROM transactions
+    SELECT
+      t.id,
+      t.account_id,
+      t.user_id,
+      t.category_id,
+      t.amount_cents,
+      t.kind,
+      t.description,
+      t.spent_at,
+      t.created_at,
+      c.name AS category_name
+    FROM transactions t
+    LEFT JOIN categories c ON c.id = t.category_id
     ${whereClause}
-    ORDER BY spent_at DESC
+    ORDER BY t.spent_at DESC
   `;
   const { rows } = await pool.query(query, values);
   return rows;

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home Financial Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Household finance</p>
+          <h1>Home Financial Dashboard</h1>
+          <p class="subhead">
+            Track balances, spot spending patterns, and keep everyone in sync.
+          </p>
+        </div>
+        <div class="status-card" id="statusCard">
+          <span class="status-dot"></span>
+          <div>
+            <p class="status-title">Live sync</p>
+            <p class="status-caption">Local API connected</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="control">
+          <label for="monthPicker">Month</label>
+          <input id="monthPicker" type="month" />
+        </div>
+        <div class="control">
+          <label for="accountFilter">Account</label>
+          <select id="accountFilter"></select>
+        </div>
+        <div class="control">
+          <label for="refreshButton">Refresh</label>
+          <button id="refreshButton">Update view</button>
+        </div>
+      </section>
+
+      <section class="summary" id="summaryCards"></section>
+
+      <section class="grid">
+        <div class="panel accounts-panel">
+          <div class="panel-header">
+            <h2>Accounts at a glance</h2>
+            <p>Balances, activity, and account types.</p>
+          </div>
+          <div class="accounts" id="accountsGrid"></div>
+          <div class="account-detail" id="accountDetail" hidden>
+            <div class="account-detail-header">
+              <div>
+                <p class="detail-eyebrow">Account detail</p>
+                <h3 id="accountDetailName"></h3>
+                <p class="detail-meta" id="accountDetailMeta"></p>
+              </div>
+              <button class="detail-close" id="accountDetailClose" type="button">Close</button>
+            </div>
+            <div class="detail-metrics" id="accountDetailMetrics"></div>
+            <div class="detail-columns">
+              <div class="detail-panel">
+                <h4>Top categories</h4>
+                <div id="accountDetailCategories"></div>
+              </div>
+              <div class="detail-panel">
+                <h4>Latest activity</h4>
+                <div id="accountDetailTransactions"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Category breakdown</h2>
+            <p>Where the money went this month.</p>
+          </div>
+          <div id="categoryChart" class="bar-chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Monthly trend</h2>
+            <p>Income vs expenses over the last months.</p>
+          </div>
+          <div id="trendChart" class="trend-chart"></div>
+        </div>
+
+        <div class="panel wide">
+          <div class="panel-header">
+            <h2>Recent transactions</h2>
+            <p>Latest activity for the selected month.</p>
+          </div>
+          <div id="transactionsTable" class="table"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

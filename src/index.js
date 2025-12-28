@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const usersRoutes = require("./routes/users");
@@ -12,6 +13,7 @@ const { ensureAdminUser, ensureDemoData } = require("./services/seedService");
 const app = express();
 
 app.use(express.json({ limit: "256kb" }));
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use("/health", healthRoutes);
 app.use("/api/auth", authRoutes);
