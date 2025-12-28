@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const usersRoutes = require("./routes/users");
@@ -16,7 +17,12 @@ const { ensureAdminUser, ensureDemoData } = require("./services/seedService");
 const app = express();
 
 app.use(express.json({ limit: "256kb" }));
-app.use(express.static(path.join(__dirname, "..", "public")));
+
+const distPath = path.join(__dirname, "..", "client", "dist");
+const publicPath = path.join(__dirname, "..", "public");
+const staticPath = fs.existsSync(distPath) ? distPath : publicPath;
+
+app.use(express.static(staticPath));
 
 app.use("/health", healthRoutes);
 app.use("/api/auth", authRoutes);
@@ -26,6 +32,13 @@ app.use("/api/categories", categoriesRoutes);
 app.use("/api/transactions", transactionsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/recurring-incomes", recurringIncomesRoutes);
+
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/health")) {
+    return next();
+  }
+  return res.sendFile(path.join(staticPath, "index.html"));
+});
 
 app.use(errorHandler);
 

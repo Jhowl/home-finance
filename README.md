@@ -55,6 +55,23 @@ Demo:
 Migrations:
 - `docs/migrations/2025-02-18-add-recurring-last-run.sql`
 
+Frontend (React + Vite):
+```bash
+cd client
+npm install
+npm run build
+```
+
+Local dev (frontend + API):
+```bash
+# terminal 1
+npm run dev
+
+# terminal 2
+cd client
+npm run dev
+```
+
 Example transaction payload:
 
 ```json
